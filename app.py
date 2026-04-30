@@ -204,17 +204,25 @@ def main() -> None:
                     config=train_cfg,
                 )
 
-            save_model(model, str(MODEL_PATH))
+            st.session_state["model"] = model
+            try:
+                save_model(model, str(MODEL_PATH))
+                st.success(f"Trained and saved model to {MODEL_PATH}")
+            except Exception as e:
+                st.warning(
+                    "Model trained but could not be saved to disk. "
+                    f"Using in-session model only. Error: {e}"
+                )
             st.session_state["metrics"] = metrics
-            st.success(f"Trained and saved model to {MODEL_PATH}")
 
-        model = None
-        if MODEL_PATH.exists():
+        model = st.session_state.get("model")
+        if model is None and MODEL_PATH.exists():
             try:
                 model = load_model(str(MODEL_PATH))
+                st.session_state["model"] = model
                 st.write("Loaded model:", str(MODEL_PATH))
             except Exception as e:
-                st.error(f"Failed to load saved model: {e}")
+                st.warning(f"Failed to load saved model: {e}")
 
         metrics: Optional[Dict[str, Any]] = st.session_state.get("metrics")
         if metrics:
