@@ -1,7 +1,7 @@
 # Stroke ML Streamlit App
 
 A simple Streamlit web app to:
-- Upload the stroke dataset CSV
+- Use a bundled stroke dataset CSV (fixed)
 - Explore the data (distributions + correlations)
 - Train a classification model (optionally with SMOTE)
 - Visualize model performance (metrics, confusion matrix, ROC/PR curves)
@@ -14,9 +14,13 @@ python -m pip install -r requirements.txt
 streamlit run app.py
 ```
 
-## Dataset requirements
+## Dataset
 
-Your CSV must include the target column `stroke` and the following feature columns:
+This app is configured to always use the bundled dataset:
+
+- `data/healthcare-dataset-stroke-data.csv`
+
+The dataset must include the target column `stroke` and the following feature columns:
 
 - `gender`
 - `age`
@@ -39,20 +43,4 @@ If your CSV has an `id` column, it will be ignored.
    - **Main file path**: `app.py`
    - **Python requirements**: `requirements.txt`
 
-### Auto-load dataset (no file upload)
-
-If you want the deployed app to automatically load the dataset (instead of uploading a CSV), set `DATASET_URL`.
-
-Option A (recommended): Streamlit Cloud **Secrets**
-
-Add a secret key:
-
-```toml
-DATASET_URL = "https://your-hosted-file.csv"
-```
-
-Option B: Environment variable
-
-Set `DATASET_URL` to a public CSV URL.
-
-The app trains from the uploaded CSV at runtime and stores a model artifact at `artifacts/stroke_model.joblib`.
+The app trains from the bundled CSV at runtime and stores a model artifact at `artifacts/stroke_model.joblib`.

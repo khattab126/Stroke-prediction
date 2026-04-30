@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -22,6 +21,7 @@ from src.stroke_app.plots import (
 APP_TITLE = "Stroke Prediction – ML Model Explorer"
 ARTIFACT_DIR = Path("artifacts")
 MODEL_PATH = ARTIFACT_DIR / "stroke_model.joblib"
+DATA_PATH = Path("data") / "healthcare-dataset-stroke-data.csv"
 
 
 def _ensure_artifacts_dir() -> None:
@@ -29,26 +29,8 @@ def _ensure_artifacts_dir() -> None:
 
 
 @st.cache_data(show_spinner=False)
-def load_csv(uploaded_file) -> pd.DataFrame:
-    return pd.read_csv(uploaded_file)
-
-
-@st.cache_data(show_spinner=False)
-def load_csv_from_url(url: str) -> pd.DataFrame:
-    return pd.read_csv(url)
-
-
-def _get_dataset_url_from_config() -> Optional[str]:
-    # Streamlit Community Cloud: set via Secrets (recommended)
-    try:
-        url = st.secrets.get("DATASET_URL")
-        if url:
-            return str(url)
-    except Exception:
-        pass
-
-    # Fallback: environment variable
-    return os.environ.get("DATASET_URL")
+def load_csv_from_path(path: str) -> pd.DataFrame:
+    return pd.read_csv(path)
 
 
 def _schema() -> StrokeSchema:
@@ -148,27 +130,23 @@ def main() -> None:
 
     model_name, train_cfg = _sidebar_config()
 
-    dataset_url = _get_dataset_url_from_config()
-    if dataset_url:
-        st.info("Auto-loading dataset from configured URL (DATASET_URL).")
-        uploaded = None
-    else:
-        uploaded = st.file_uploader(
-            "Upload the stroke dataset CSV (must include the 'stroke' column)",
-            type=["csv"],
-            accept_multiple_files=False,
+    if not DATA_PATH.exists():
+        st.error(
+            "Bundled dataset not found. Expected file at: "
+            f"{DATA_PATH}. Make sure it exists in the repo."
         )
+        st.stop()
+
+    st.info(f"Using bundled dataset: {DATA_PATH}")
 
     col_left, col_right = st.columns([1.1, 0.9], gap="large")
 
     df: Optional[pd.DataFrame] = None
-    if dataset_url:
-        try:
-            df = clean_dataframe(load_csv_from_url(dataset_url))
-        except Exception as e:
-            st.error(f"Failed to load DATASET_URL: {e}")
-    elif uploaded is not None:
-        df = clean_dataframe(load_csv(uploaded))
+    try:
+        df = clean_dataframe(load_csv_from_path(str(DATA_PATH)))
+    except Exception as e:
+        st.error(f"Failed to load bundled dataset: {e}")
+        st.stop()
 
     with col_left:
         st.subheader("Data")
